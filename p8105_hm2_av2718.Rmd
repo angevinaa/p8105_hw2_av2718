@@ -94,7 +94,7 @@ trash_wheel =
            as.integer(sports_balls))
 ```
 
-Now, we will work with the `Professor Trash Wheel`data set. In the following code chunk we use a similar process as above to import, clean, and organize the data. 
+In the following code chuck will work with the `Professor Trash Wheel`data set. We use a similar process as above to import, clean, and organize the data. 
 
 ```{r}
 professor_wheel = 
@@ -109,16 +109,16 @@ professor_wheel =
 ```
 
 
-Lastly, we combine 'Professor Trash Wheel' data set with the 'Mr. Trash Wheel' data set to produce a single tidy data set. To keep track of which Trash Wheel is which, you may added an additional variable to both data sets before combining. To combine the data we use the `bind_rows()` function from the dplyr package in R to bind together two data frames by their rows:
+Lastly, we combine `Professor Trash Wheel` data set with the 'Mr. Trash Wheel' data set to produce a single tidy data set. To combine the data we use the `bind_rows()` function from the dplyr package in R, which allow us to bind together the two data sets by their rows, keeping the columns the same.To keep track of which database is which, we added an additional `id` variable to both data sets when combining. 
 
 ```{r}
-# mutate(trash_wheel,
-#          trash_dataset = c(1))
-# 
-# mutate(professor_wheel,
-#          trash_dataset = c(2))
-# 
-#  trash_tidy = bind_rows(trash_wheel,professor_wheel)
+
+trash_wheel$dumpster = as.double(trash_wheel$dumpster)
+
+trash_tidy = 
+  bind_rows(trash_wheel, professor_wheel,.id="trash_wheel") # merge data sets 
+
+head(trash_tidy, 8)  
 ```
 
 
