@@ -9,13 +9,12 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, message = FALSE)
 ```
 
-
-```{r load_libraries} 
+```{r load_libraries}
 library(tidyverse)   #load packages 
 library(readxl)
 ```
 
-## Problem 1
+## Problem 1 [Solution provided by Prof.Goldsmith]
 
 This problem focuses on NYC Transit Data. Below we import and clean data from `NYC_Transit_Subway_Entrance_And_Exit_Data.csv`. The process begins with data import, updates variable names, and selects the columns that will be used in later parts fo this problem. We update `entry` from `yes` / `no` to a logical variable. As part of data import, we specify that `Route` columns 8-11 should be character for consistency with 1-7.
 
@@ -33,6 +32,7 @@ trans_ent =
 ```
 
 The following code chunk selects station name and line, and then uses distinct() to obtain all unique combinations. As a result, the number of rows in this dataset is the number of unique stations.
+
 ```{r}
 trans_ent %>% 
   select(station_name, line) %>%  #select unique comobinations of station name and line
@@ -48,7 +48,7 @@ trans_ent %>%
   distinct
 ```
 
-To compute the proportion of station entrances / exits without vending allow entrance, we first exclude station entrances that do not allow vending. Then, we focus on the entry variable – this logical, so taking the mean will produce the desired proportion (recall that R will coerce logical to numeric in cases like this).
+To compute the proportion of station entrances / exits without vending allow entrance, we first exclude station entrances that do not allow vending. Then, we focus on the entry variable -- this logical, so taking the mean will produce the desired proportion (recall that R will coerce logical to numeric in cases like this).
 
 ```{r}
 trans_ent %>% 
@@ -81,44 +81,145 @@ trans_ent %>%
 
 ## Problem 2
 
-This problem uses the `Mr. Trash Wheel`data set. Below we import and clean data from `Trash-Wheel-Collection-Totals-7-2020-2.xlsx`. The process begins with data import, specifying the sheet in the Excel file, and omitting the non-data entries (eg.notes and figures). We clean the variable names, and omit rows that don't include dumpster-specific data.  As part of data import, we also round the number of `sports balls` to the nearest integer and convert the result to an integer variable (using `as.integer`).
+This problem uses the `Mr. Trash Wheel`data set. Below we import and clean data from `Trash-Wheel-Collection-Totals-7-2020-2.xlsx`. The process begins with data import, specifying the sheet in the Excel file, and omitting the non-data entries (e.g.notes and figures). We clean the variable names, and omit rows that don't include dumpster-specific data. As part of data import, we also round the number of `sports balls` to the nearest integer and convert the result to an integer variable (using `as.integer`).
 
 ```{r}
 trash_wheel = 
   read_excel(
-    "data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", 
+    "data/Trash Wheel Collection Data.xlsx", 
         sheet = 1, skip = 2,range = cell_cols("A:N") ) %>% # Specify rows and columns
   janitor::clean_names() %>% 
   drop_na(dumpster) %>% # omit rows that don't include dumpster-specific data
-  mutate(sports_balls = round(sports_balls) %>% 
-           as.integer(sports_balls))
+  mutate(sports_balls =
+           as.integer(sports_balls),
+           dumpster = as.character(dumpster))
 ```
 
-In the following code chuck will work with the `Professor Trash Wheel`data set. We use a similar process as above to import, clean, and organize the data. 
+In the following code chuck will work with the `Professor Trash Wheel`data set. We use a similar process as above to import, clean, and organize the data.
 
 ```{r}
 professor_wheel = 
   read_excel(
-    "data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", 
-        sheet = 2, skip = 2,range = cell_cols("A:N"),
-    ) %>% # Specify rows and columns
+     "data/Trash Wheel Collection Data.xlsx", 
+        sheet = 2, skip = 2,range = cell_cols("A:N"), # Specify rows and columns
+    ) %>% 
   janitor::clean_names() %>% 
   drop_na(dumpster) %>% # omit rows that don't include dumpster-specific data
-  mutate(sports_balls = round(sports_balls) %>% 
-           as.integer(sports_balls))
+  mutate(year = as.character(year),
+         dumpster = as.character(dumpster))
 ```
 
-
-Lastly, we combine `Professor Trash Wheel` data set with the 'Mr. Trash Wheel' data set to produce a single tidy data set. To combine the data we use the `bind_rows()` function from the dplyr package in R, which allow us to bind together the two data sets by their rows, keeping the columns the same.To keep track of which database is which, we added an additional `id` variable to both data sets when combining. 
+Lastly, we combine `Professor Trash Wheel` data set with the 'Mr. Trash Wheel' data set to produce a single tidy data set. To combine the data we use the `bind_rows()` function, which allow us to bind together the two data sets by their rows, keeping the columns the same. To keep track of which database is which, we added an additional `id` variable to both data sets when combining.
 
 ```{r}
-
-trash_wheel$dumpster = as.double(trash_wheel$dumpster)
-
 trash_tidy = 
-  bind_rows(trash_wheel, professor_wheel,.id="trash_wheel") # merge data sets 
+  bind_rows(trash_wheel, professor_wheel,.id = "trash_wheel") # merge data sets 
 
-head(trash_tidy, 8)  
+head(trash_tidy, 8) #view first 8 rows of new data set
+
+summary(trash_tidy)
 ```
 
+```{r}
+trash_wheel_2020 = filter(trash_wheel, year == "2020") # Mr Trash Wheel data from 2020 
+```
+
+#### Solution:
+
+The total number of observations in the combined data frame is `r dim(trash_tidy)`. The key variables in the data are `r ls(trash_tidy)`. Lastly, the total weight of trash collected by Professor Trash Wheel is `r sum(professor_wheel$weight_tons)`, and the total number of sports balls collected by Mr Trash Wheel in 2020 is `r sum(trash_wheel_2020$sports_balls)`.
+
+## Problem 3
+
+This problem focuses on NYC Transit Data. Below we import and clean data from `data/fivethirtyeight_datasets/pols-month.csv`, `data/fivethirtyeight_datasets/unemployment.csv`, and `data/fivethirtyeight_datasets/snp.csv`. The process begins by importing, cleaning, and rearranging the data for consistency across data sets, as our final goal is to combine them. First, we First, clean the data in pols-month.csv. We use `separate()` to break up the variable `mon` into integer variables `year`, `month`, and `day`; we replace month number with month name; create a `president` variable taking values `gop` and `dem`, and remove `prez_dem` and `prez_gop`; and remove the day variable.
+
+```{r}
+party = 
+  read_csv(file = "./data/fivethirtyeight_datasets/pols-month.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(mon, into = c("year","month","day")) %>% #separate mon variable
+  mutate( .data = .,  #replace month number with month name
+    month = replace(month, month == "01", "jan"), 
+    month = replace(month, month == "02", "feb"),
+    month = replace(month, month == "03", "mar"),
+    month = replace(month, month == "04", "apr"),
+    month = replace(month, month == "05", "may"),
+    month = replace(month, month == "06", "jun"),
+    month = replace(month, month == "07", "jul"),
+    month = replace(month, month == "08", "aug"),
+    month = replace(month, month == "09", "sep"),
+    month = replace(month, month == "10", "oct"),
+    month = replace(month, month == "11", "nov"),
+    month = replace(month, month == "12", "dec"),
+    president = prez_gop + prez_dem) %>% 
+  select(.data = ., -c(prez_dem, prez_gop, day)) #create president variable
+
+head(party, 8) #view first 8 rows of new dataframe 
+```
+
+In the chuck below, we re the data according to year and month, and organize so that year and month are the leading columns.
+
+```{r}
+stock_market = read_csv(file = "./data/fivethirtyeight_datasets/snp.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(date, into = c("month","day","year")) %>% #separate date variable
+  mutate(.data = ., #replace month number with month name
+    month = replace(month, month == "1", "jan"),
+    month = replace(month, month == "2", "feb"),
+    month = replace(month, month == "3", "mar"),
+    month = replace(month, month == "4", "apr"),
+    month = replace(month, month == "5", "may"),
+    month = replace(month, month == "6", "jun"),
+    month = replace(month, month == "7", "jul"),
+    month = replace(month, month == "8", "aug"),
+    month = replace(month, month == "9", "sep"),
+    month = replace(month, month == "10", "oct"),
+    month = replace(month, month == "11", "nov"),
+    month = replace(month, month == "12", "dec")) %>% 
+  mutate(.data = ., year = as.numeric(year), #rearrange by year and month
+         y = if_else(year < 22, 2000, 1900),
+         year = year + y,
+         year = as.character(year),
+         ) %>% 
+  select(.data = .,-day,-y) %>% 
+  relocate(year, month) 
+
+head(stock_market, 8) #view first 8 rows of new dataframe 
+
+```
+
+Third, we tidy the unemployment data so that it can be merged with the previous datasets. We first switch from “wide” to “long” format; ensuring that key variables have the same name; and ensuring that key variables take the same values.
+
+```{r}
+unemployment = 
+  read_csv(file = "./data/fivethirtyeight_datasets/unemployment.csv", 
+           col_types = "ccccccccccccc") %>% 
+janitor::clean_names() 
+unemployment_tidy =
+  pivot_longer(        #switch format from "wide" to "long"
+    unemployment,
+    jan:dec,
+    names_to = "month",
+    values_to = "unemployment_percentage") %>% 
+  mutate(.data = ., unemployment_percentage = as.numeric(unemployment_percentage))
+
+head(unemployment_tidy, 8) #view first 8 rows of new dataframe 
+
+```
+
+Lastly, we do a `left_join` join to `stock_market` into `politics`, and then merge the `unemployment` data into the result using `year` and `month` as keys; this allow us to keep the original observations even when there isn't a match. 
+
+```{r}
+party_market =
+  left_join(party, stock_market, by = c("year", "month"))
+
+all_tidy =
+  left_join(party_market, unemployment_tidy, by = c("year", "month"))
+
+
+head(all_tidy, 8) #view first 8 rows of new data set
+```
+
+#### Solution:
+
+The file “pols-month” contains `r dim(party)` observations of variables related to the number of national politicians who are democratic or republicans (`r ls(party)`) between years `r range(party$year)`. Likewise, the file “snp” contains `r dim(stock_market)` observations related to Standard & Poor’s stock market index (S&P). Lastly, the file “unemployment” contains `r dim(unemployment_tidy)` observations of unemployment related variables (specifically,`r ls(unemployment_tidy)`) between the years `r range(unemployment_tidy$year)`.
 
