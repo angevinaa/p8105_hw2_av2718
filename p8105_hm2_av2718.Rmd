@@ -130,7 +130,9 @@ The total number of observations in the combined data frame is `r dim(trash_tidy
 
 ## Problem 3
 
-This problem focuses on NYC Transit Data. Below we import and clean data from `data/fivethirtyeight_datasets/pols-month.csv`, `data/fivethirtyeight_datasets/unemployment.csv`, and `data/fivethirtyeight_datasets/snp.csv`. The process begins by importing, cleaning, and rearranging the data for consistency across data sets, as our final goal is to combine them. First, we First, clean the data in pols-month.csv. We use `separate()` to break up the variable `mon` into integer variables `year`, `month`, and `day`; we replace month number with month name; create a `president` variable taking values `gop` and `dem`, and remove `prez_dem` and `prez_gop`; and remove the day variable.
+This problem focuses on NYC Transit Data. Below we import and clean data from `data/fivethirtyeight_datasets/pols-month.csv`, `data/fivethirtyeight_datasets/unemployment.csv`, and `data/fivethirtyeight_datasets/snp.csv`. The process begins by importing, cleaning, and rearranging the data for consistency across data sets, as our final goal is to combine them. 
+
+First, we clean the data in "pols" file. We use `separate()` to break up the variable `mon` into integer variables `year`, `month`, and `day`; we replace month number with month name; create a `president` variable taking values `gop` and `dem`, and remove `prez_dem` and `prez_gop`; and remove the day variable.
 
 ```{r}
 party = 
@@ -156,7 +158,7 @@ party =
 head(party, 8) #view first 8 rows of new dataframe 
 ```
 
-In the chuck below, we re the data according to year and month, and organize so that year and month are the leading columns.
+In the following code chuck, we rearrange the `snp` data according to year and month, and organize the dataframe so that year and month are the leading columns.
 
 ```{r}
 stock_market = read_csv(file = "./data/fivethirtyeight_datasets/snp.csv") %>% 
@@ -187,7 +189,7 @@ head(stock_market, 8) #view first 8 rows of new dataframe
 
 ```
 
-Third, we tidy the unemployment data so that it can be merged with the previous datasets. We first switch from “wide” to “long” format; ensuring that key variables have the same name; and ensuring that key variables take the same values.
+Third, we tidy the "unemployment" data so that we can merge it with the other two datasets. We first switch from “wide” to “long” format; ensuring that key variables have the same name; and ensuring that key variables take the same values.
 
 ```{r}
 unemployment = 
@@ -206,7 +208,7 @@ head(unemployment_tidy, 8) #view first 8 rows of new dataframe
 
 ```
 
-Lastly, we do a `left_join` join to `stock_market` into `politics`, and then merge the `unemployment` data into the result using `year` and `month` as keys; this allow us to keep the original observations even when there isn't a match. 
+We are now ready to join the data sets. First, we do a `left_join` to merge `stock_market` into `politics`, and then merge the `unemployment` data into the resulting dataframe using `year` and `month` as keys. The `left_join` is the most appropriate for this problem, as it allows us to keep the original observations even when there isn't a match. 
 
 ```{r}
 party_market =
